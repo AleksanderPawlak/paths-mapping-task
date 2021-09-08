@@ -4,7 +4,7 @@ from src import remapping
 
 
 class TestMapping(unittest.TestCase):
-    def test_remap_paths_from_the_same_platform(self):
+    def test_remap_paths_from_windows(self):
         # TODO: think about other input data format
         input_mapping = {
             "L:\\": "X:\\",
@@ -26,6 +26,29 @@ class TestMapping(unittest.TestCase):
         ]
         result = remapping.tools.remap(
             input_mapping, input_paths, remapping.tools.System.WINDOWS
+        )
+
+        self.assertEqual(expected_result, result)
+
+    def test_remap_paths_from_linux(self):
+        input_mapping = {
+            "/mnt/storage1/": "/mnt2/storage2/",
+            "/mnt3/": "/mnt/",
+        }
+        input_paths = [
+            "/mnt/storage1/temp",
+            "/mnt3/storage1/",
+            "cache/Tree.abc",
+            "/mnt5/nope",
+        ]
+        expected_result = [
+            "/mnt2/storage2/temp",
+            "/mnt/storage1/",
+            "cache/Tree.abc",
+            "/mnt5/nope",
+        ]
+        result = remapping.tools.remap(
+            input_mapping, input_paths, remapping.tools.System.POSIX
         )
 
         self.assertEqual(expected_result, result)
