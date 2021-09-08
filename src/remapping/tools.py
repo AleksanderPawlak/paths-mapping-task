@@ -6,8 +6,8 @@ import pathlib
 # TODO: is there a way to differentiate between systems without passing the system?
 class System(enum.Enum):
     WINDOWS = enum.auto()
-    POSIX = enum.auto()
-    # TODO: LINUX and Mac instead of POSIX
+    LINUX = enum.auto()
+    MAC = enum.auto()
 
 
 def get_path_resolver(platform: System) -> typing.Type[pathlib.PurePath]:
@@ -15,7 +15,8 @@ def get_path_resolver(platform: System) -> typing.Type[pathlib.PurePath]:
     # Can PureWindowsPath deal with all kinds of paths? What about relative paths
     path_resolver = {
         System.WINDOWS: pathlib.PureWindowsPath,
-        System.POSIX: pathlib.PurePosixPath,
+        System.LINUX: pathlib.PurePosixPath,
+        System.MAC: pathlib.PurePosixPath,
     }.get(platform)
     if path_resolver is None:
         raise ValueError(f"Passed platform: {platform} is not supported.")
@@ -49,7 +50,9 @@ def remap_cross_platform(
     input_paths: typing.List[str],
     dst_platform: System,
 ) -> typing.List[str]:
-    dst_paths = mapping.pop(dst_platform)
+    dst_paths = mapping.pop(
+        dst_platform
+    )  # FIXME: What if dst_platform is not in mapping?
     dst_resolver = get_path_resolver(dst_platform)
     result = []
     # FIXME: ugly nested loops and breaks
@@ -61,12 +64,18 @@ def remap_cross_platform(
                 if path_resolver(path) in resolved_input_path.parents:
                     resolved_input_path = (
                         resolved_input_path.as_posix()
-                        if dst_platform == System.POSIX
+                        if dst_platform
+                        in (System.LINUX, System.MAC)  # FIXME: super ugly
                         else str(resolved_input_path)
                     )
-                    result_path = dst_resolver(dst_paths[idx]).joinpath(
+                    # FIXME: ugly
+                    path_endswith_sep = path.endswith("/") or path.endswith("\\")
+                    subpath = (
                         resolved_input_path[len(path) :]
+                        if path_endswith_sep
+                        else resolved_input_path[len(path) + 1 :]
                     )
+                    result_path = dst_resolver(dst_paths[idx]).joinpath(subpath)
                     result.append(str(result_path))
                     break
             else:
