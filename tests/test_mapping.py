@@ -25,9 +25,8 @@ class TestMapping(unittest.TestCase):
             "cache\\Tree.abc",
             "g:\\nope",
         ]
-        result = remapping.tools.remap(
-            input_mapping, input_paths, remapping.tools.System.WINDOWS
-        )
+        remap = remapping.tools.SimpleRemap(input_mapping)
+        result = remap(input_paths, remapping.tools.System.WINDOWS)
 
         self.assertEqual(expected_result, result)
 
@@ -44,13 +43,32 @@ class TestMapping(unittest.TestCase):
         ]
         expected_result = [
             "/mnt2/storage2/temp",
-            "/mnt/storage1/",
+            "/mnt/storage1",
             "cache/Tree.abc",
             "/mnt5/nope",
         ]
-        result = remapping.tools.remap(
-            input_mapping, input_paths, remapping.tools.System.LINUX
-        )
+        remap = remapping.tools.SimpleRemap(input_mapping)
+        result = remap(input_paths, remapping.tools.System.LINUX)
+
+        self.assertEqual(expected_result, result)
+
+    def test_remap_paths_from_mac(self):
+        input_mapping = {
+            "/Volumes/storage1/": "/Volumes/storage4/",
+            "/Volumes/storage2": "/Volumes/storage3",
+        }
+        input_paths = [
+            "/Volumes/storage1/project2/input/20190117",
+            "/Volumes/storage2/project3/shots",
+            "/Volumes/storage_0/project1/shots",
+        ]
+        expected_result = [
+            "/Volumes/storage4/project2/input/20190117",
+            "/Volumes/storage3/project3/shots",
+            "/Volumes/storage_0/project1/shots",
+        ]
+        remap = remapping.tools.SimpleRemap(input_mapping)
+        result = remap(input_paths, remapping.tools.System.MAC)
 
         self.assertEqual(expected_result, result)
 
@@ -66,9 +84,10 @@ class TestMapping(unittest.TestCase):
             "/mnt5/nope",
         ]
         dummy_platform = "SomeDummyPlatform"
+        remap = remapping.tools.SimpleRemap(input_mapping)
 
         with self.assertRaises(ValueError) as e:
-            remapping.tools.remap(input_mapping, input_paths, dummy_platform)
+            remap(input_paths, dummy_platform)
 
         self.assertEqual(
             f"Passed platform: '{dummy_platform}' is not supported.",
@@ -78,9 +97,7 @@ class TestMapping(unittest.TestCase):
     def test_remap_paths_from_different_platforms(self):
         input_mapping = {
             remapping.tools.System.WINDOWS: ["L:\\", "P:\\"],
-            remapping.tools.System.MAC: ["/Volumes/storage1", "/Volumes/storage2"],
-            # TODO: test
-            # remapping.tools.System.MAC: ["/Volumes/storage1/", "/Volumes/storage2/"],
+            remapping.tools.System.MAC: ["/Volumes/storage1", "/Volumes/storage2/"],
         }
         input_paths = [
             "L:\\temp",
@@ -97,9 +114,8 @@ class TestMapping(unittest.TestCase):
             "cache\\Tree.abc",
             "g:\\nope",
         ]
-        result = remapping.tools.remap_cross_platform(
-            input_mapping, input_paths, remapping.tools.System.MAC
-        )
+        remap = remapping.tools.MixedPlatformRemap(input_mapping)
+        result = remap(input_paths, remapping.tools.System.MAC)
 
         self.assertEqual(expected_result, result)
 
@@ -132,9 +148,8 @@ class TestMapping(unittest.TestCase):
             "/mnt/storage1/project2/input/20190117",
             "/mnt/storage1/project2/shots",
         ]
-        result = remapping.tools.remap_cross_platform(
-            input_mapping, input_paths, remapping.tools.System.LINUX
-        )
+        remap = remapping.tools.MixedPlatformRemap(input_mapping)
+        result = remap(input_paths, remapping.tools.System.LINUX)
 
         self.assertEqual(expected_result, result)
 
@@ -175,9 +190,8 @@ class TestMapping(unittest.TestCase):
             "/mnt/storage1/project2/input/20190117",
             "/mnt/storage3/project2/shots",
         ]
-        result = remapping.tools.remap_cross_platform(
-            input_mapping, input_paths, remapping.tools.System.LINUX
-        )
+        remap = remapping.tools.MixedPlatformRemap(input_mapping)
+        result = remap(input_paths, remapping.tools.System.LINUX)
 
         self.assertEqual(expected_result, result)
 
@@ -221,9 +235,8 @@ class TestMapping(unittest.TestCase):
             "/Volumes/storage1/project2/input/20190117",
             "/Volumes/storage2/project2/shots",
         ]
-        result = remapping.tools.remap_cross_platform(
-            input_mapping, input_paths, remapping.tools.System.MAC
-        )
+        remap = remapping.tools.MixedPlatformRemap(input_mapping)
+        result = remap(input_paths, remapping.tools.System.MAC)
 
         self.assertEqual(expected_result, result)
 
@@ -244,11 +257,10 @@ class TestMapping(unittest.TestCase):
             "P:\\project1\\assets\\env\\Forest",
         ]
         target_platform = remapping.tools.System.MAC
+        remap = remapping.tools.MixedPlatformRemap(input_mapping)
 
         with self.assertRaises(ValueError) as e:
-            remapping.tools.remap_cross_platform(
-                input_mapping, input_paths, target_platform
-            )
+            remap(input_paths, target_platform)
 
         self.assertEqual(
             f"Destination platform '{target_platform}' "
@@ -269,20 +281,32 @@ class TestMapping(unittest.TestCase):
             "p:/project1/textures\\grass.tga",
             "P:\\project1\\assets\\env\\Forest",
         ]
+        remap = remapping.tools.MixedPlatformRemap(input_mapping)
 
         with self.assertRaises(ValueError) as e:
-            remapping.tools.remap_cross_platform(
-                input_mapping, input_paths, dummy_platform
-            )
+            remap(input_paths, dummy_platform)
 
         self.assertEqual(
             f"Passed platform: '{dummy_platform}' is not supported.",
             str(e.exception),
         )
 
-    # def test_remap_mixed_platforms_with_different_paths_number_should_raise_error(self):
-    #     ...
+    def test_initialize_remap_mixed_platforms_with_different_paths_number_should_raise_error(
+        self,
+    ):
+        input_mapping = {
+            remapping.tools.System.WINDOWS: ["L:\\", "P:\\"],
+            remapping.tools.System.LINUX: ["/mnt/storage1"],  # missing element
+            remapping.tools.System.MAC: ["/Volumes/storage1", "/Volumes/storage2"],
+        }
+        with self.assertRaises(ValueError) as e:
+            remapping.tools.MixedPlatformRemap(input_mapping)
+
+        self.assertEqual(
+            f"Paths lists in mapping should have the same size. Given mapping: {input_mapping}",
+            str(e.exception),
+        )
 
     # TODO: test other failing cases
-    # def test_incorrect_remap_path_types(self):
+    # def test_incorrect_remap_path_types(self):  # TODO: is this valid?
     #     ...
