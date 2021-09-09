@@ -117,7 +117,7 @@ class TestMapping(unittest.TestCase):
 
         self.assertEqual(expected_result, result)
 
-    def test_remap_paths_from_mixed_platforms_with_none_value_in_mapping(self):
+    def test_remap_paths_from_mixed_platforms_with_none_value_in_mappings_source(self):
         input_mapping = {
             remapping.tools.System.WINDOWS: ["L:\\", "P:\\", "G:\\"],
             remapping.tools.System.LINUX: [
@@ -136,7 +136,7 @@ class TestMapping(unittest.TestCase):
             "p:/project1/textures\\grass.tga",
             "P:\\project1\\assets\\env\\Forest",
             "cache\\Tree.abc",
-            "g:\\nope",
+            "g:\\yes",
             "/mnt/storage2/project1/assets/prop/Box",
             "/mnt/storage2/project1/textures/wood.tga",
             "/Volumes/storage1/project2/input/20190117",
@@ -148,7 +148,7 @@ class TestMapping(unittest.TestCase):
             "/mnt/storage2/project1/assets/env/Forest",
             # "cache/Tree.abc",  # This might be a bug in specification
             "cache\\Tree.abc",
-            "/mnt/storage3/nope",
+            "/mnt/storage3/yes",
             "/mnt/storage2/project1/assets/prop/Box",
             "/mnt/storage2/project1/textures/wood.tga",
             "/mnt/storage1/project2/input/20190117",
@@ -156,6 +156,49 @@ class TestMapping(unittest.TestCase):
         ]
         result = remapping.tools.remap_cross_platform(
             input_mapping, input_paths, remapping.tools.System.LINUX
+        )
+
+        self.assertEqual(expected_result, result)
+
+    def test_remap_paths_from_mixed_platforms_with_none_value_in_mappings_dst(self):
+        input_mapping = {
+            remapping.tools.System.WINDOWS: ["L:\\", "P:\\", "G:\\"],
+            remapping.tools.System.LINUX: [
+                "/mnt/storage1",
+                "/mnt/storage2",
+                "/mnt/storage3",
+            ],
+            remapping.tools.System.MAC: [
+                "/Volumes/storage1",
+                None,
+                "/Volumes/storage2",
+            ],
+        }
+        input_paths = [
+            "L:\\temp",
+            "p:/project1/textures\\grass.tga",
+            "P:\\project1\\assets\\env\\Forest",
+            "cache\\Tree.abc",
+            "g:\\yes",
+            "/mnt/storage2/project1/assets/prop/Box",
+            "/mnt/storage2/project1/textures/wood.tga",
+            "/Volumes/storage1/project2/input/20190117",
+            "/Volumes/storage2/project2/shots",
+        ]
+        expected_result = [
+            "/Volumes/storage1/temp",
+            "p:/project1/textures\\grass.tga",
+            "P:\\project1\\assets\\env\\Forest",
+            # "cache/Tree.abc",  # This might be a bug in specification
+            "cache\\Tree.abc",
+            "/Volumes/storage2/yes",
+            "/mnt/storage2/project1/assets/prop/Box",
+            "/mnt/storage2/project1/textures/wood.tga",
+            "/Volumes/storage1/project2/input/20190117",
+            "/Volumes/storage2/project2/shots",
+        ]
+        result = remapping.tools.remap_cross_platform(
+            input_mapping, input_paths, remapping.tools.System.MAC
         )
 
         self.assertEqual(expected_result, result)

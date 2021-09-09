@@ -10,6 +10,9 @@ class System(enum.Enum):
     MAC = enum.auto()
 
 
+# TODO: Maybe class with mapping in init and __call__ instead of functions?
+
+
 def get_path_resolver(platform: System) -> typing.Type[pathlib.PurePath]:
     # TODO: maybe without PurePathLib?
     # Can PureWindowsPath deal with all kinds of paths? What about relative paths
@@ -45,6 +48,7 @@ def remap(
 
 
 # TODO: maybe these two functions should be merged?
+# TODO: consider extracting preparation of mapping to other function
 def remap_cross_platform(
     mapping: typing.Dict[System, typing.Iterable[str]],
     input_paths: typing.List[str],
@@ -60,7 +64,7 @@ def remap_cross_platform(
         for platform, paths in mapping.items():
             path_resolver = get_path_resolver(platform)
             for idx, path in enumerate(paths):
-                if not path:
+                if not path or not dst_paths[idx]:
                     continue
 
                 resolved_input_path = path_resolver(input_path)
