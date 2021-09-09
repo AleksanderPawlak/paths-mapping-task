@@ -228,7 +228,8 @@ class TestMapping(unittest.TestCase):
             )
 
         self.assertEqual(
-            f"Destination platform '{target_platform}' was not specified in input mapping: {input_mapping}",
+            f"Destination platform '{target_platform}' "
+            f"was not specified in input mapping: {input_mapping}",
             str(e.exception),
         )
 
