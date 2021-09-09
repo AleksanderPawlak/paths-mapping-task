@@ -54,6 +54,27 @@ class TestMapping(unittest.TestCase):
 
         self.assertEqual(expected_result, result)
 
+    def test_remap_paths_with_unsupported_platform_should_raise(self):
+        input_mapping = {
+            "/mnt/storage1/": "/mnt2/storage2/",
+            "/mnt3/": "/mnt/",
+        }
+        input_paths = [
+            "/mnt/storage1/temp",
+            "/mnt3/storage1/",
+            "cache/Tree.abc",
+            "/mnt5/nope",
+        ]
+        dummy_platform = "SomeDummyPlatform"
+
+        with self.assertRaises(ValueError) as e:
+            remapping.tools.remap(input_mapping, input_paths, dummy_platform)
+
+        self.assertEqual(
+            f"Passed platform: '{dummy_platform}' is not supported.",
+            str(e.exception),
+        )
+
     def test_remap_paths_from_different_platforms(self):
         input_mapping = {
             remapping.tools.System.WINDOWS: ["L:\\", "P:\\"],
@@ -192,7 +213,7 @@ class TestMapping(unittest.TestCase):
             "/Volumes/storage1/temp",
             "p:/project1/textures\\grass.tga",
             "P:\\project1\\assets\\env\\Forest",
-            # "cache/Tree.abc",  # This might be a bug in specification
+            # "cache/Tree.abc",  # This might be a bug in specification. Why should it change?
             "cache\\Tree.abc",
             "/Volumes/storage2/yes",
             "/mnt/storage2/project1/assets/prop/Box",
@@ -206,7 +227,9 @@ class TestMapping(unittest.TestCase):
 
         self.assertEqual(expected_result, result)
 
-    def test_remap_with_paths_from_mixed_platforms_with_missing_target_platform(self):
+    def test_remap_with_paths_from_mixed_platforms_with_missing_target_platform_should_raise(
+        self,
+    ):
         input_mapping = {
             remapping.tools.System.WINDOWS: ["L:\\", "P:\\", "G:\\"],
             remapping.tools.System.LINUX: [
@@ -230,6 +253,30 @@ class TestMapping(unittest.TestCase):
         self.assertEqual(
             f"Destination platform '{target_platform}' "
             f"was not specified in input mapping: {input_mapping}",
+            str(e.exception),
+        )
+
+    def test_remap_with_paths_from_mixed_platforms_with_unsupported_platform_should_raise(
+        self,
+    ):
+        dummy_platform = "SomeDummyPlatform"
+        input_mapping = {
+            remapping.tools.System.WINDOWS: ["L:\\", "P:\\"],
+            dummy_platform: ["/mnt/storage1", "/mnt/storage2"],
+        }
+        input_paths = [
+            "L:\\temp",
+            "p:/project1/textures\\grass.tga",
+            "P:\\project1\\assets\\env\\Forest",
+        ]
+
+        with self.assertRaises(ValueError) as e:
+            remapping.tools.remap_cross_platform(
+                input_mapping, input_paths, dummy_platform
+            )
+
+        self.assertEqual(
+            f"Passed platform: '{dummy_platform}' is not supported.",
             str(e.exception),
         )
 

@@ -22,7 +22,7 @@ def get_path_resolver(platform: System) -> typing.Type[pathlib.PurePath]:
         System.MAC: pathlib.PurePosixPath,
     }.get(platform)
     if path_resolver is None:
-        raise ValueError(f"Passed platform: {platform} is not supported.")
+        raise ValueError(f"Passed platform: '{platform}' is not supported.")
 
     return path_resolver
 
