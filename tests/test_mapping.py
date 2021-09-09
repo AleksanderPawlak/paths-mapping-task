@@ -161,6 +161,9 @@ class TestMapping(unittest.TestCase):
         self.assertEqual(expected_result, result)
 
     def test_remap_paths_from_mixed_platforms_with_none_value_in_mappings_dst(self):
+        """ "
+        If we want to reuse mapping there might be case where there is None value in dst paths.
+        """
         input_mapping = {
             remapping.tools.System.WINDOWS: ["L:\\", "P:\\", "G:\\"],
             remapping.tools.System.LINUX: [
@@ -203,9 +206,35 @@ class TestMapping(unittest.TestCase):
 
         self.assertEqual(expected_result, result)
 
-    # TODO: test other failing cases
+    def test_remap_with_paths_from_mixed_platforms_with_missing_target_platform(self):
+        input_mapping = {
+            remapping.tools.System.WINDOWS: ["L:\\", "P:\\", "G:\\"],
+            remapping.tools.System.LINUX: [
+                "/mnt/storage1",
+                "/mnt/storage2",
+                "/mnt/storage3",
+            ],
+        }
+        input_paths = [
+            "L:\\temp",
+            "p:/project1/textures\\grass.tga",
+            "P:\\project1\\assets\\env\\Forest",
+        ]
+        target_platform = remapping.tools.System.MAC
+
+        with self.assertRaises(ValueError) as e:
+            remapping.tools.remap_cross_platform(
+                input_mapping, input_paths, target_platform
+            )
+
+        self.assertEqual(
+            f"Destination platform '{target_platform}' was not specified in input mapping: {input_mapping}",
+            str(e.exception),
+        )
+
     # def test_remap_mixed_platforms_with_different_paths_number_should_raise_error(self):
     #     ...
 
+    # TODO: test other failing cases
     # def test_incorrect_remap_path_types(self):
     #     ...

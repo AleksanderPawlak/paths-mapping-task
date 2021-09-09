@@ -35,10 +35,9 @@ def remap(
 
     # FIXME: This loop could be probably better.
     for input_path in input_paths:
-        # FIXME: key, value <- rename
-        for key, value in mapping.items():
-            if path_resolver(key) in path_resolver(input_path).parents:
-                result_path = value + input_path[len(key) :]
+        for source_sub_path, dst_path in mapping.items():
+            if path_resolver(source_sub_path) in path_resolver(input_path).parents:
+                result_path = dst_path + input_path[len(source_sub_path) :]
                 result.append(result_path)
                 break
         else:
@@ -54,9 +53,12 @@ def remap_cross_platform(
     input_paths: typing.List[str],
     dst_platform: System,
 ) -> typing.List[str]:
-    dst_paths = mapping.pop(
-        dst_platform
-    )  # FIXME: What if dst_platform is not in mapping?
+    if dst_platform not in mapping:
+        raise ValueError(
+            f"Destination platform '{dst_platform}' was not specified in input mapping: {mapping}"
+        )
+
+    dst_paths = mapping.pop(dst_platform)
     dst_resolver = get_path_resolver(dst_platform)
     result = []
     # FIXME: ugly nested loops and breaks
