@@ -60,6 +60,9 @@ def remap_cross_platform(
         for platform, paths in mapping.items():
             path_resolver = get_path_resolver(platform)
             for idx, path in enumerate(paths):
+                if not path:
+                    continue
+
                 resolved_input_path = path_resolver(input_path)
                 if path_resolver(path) in resolved_input_path.parents:
                     resolved_input_path = (
