@@ -9,12 +9,40 @@ from .utils import (
 
 
 class MixedPlatformRemap:
+    # Remap algorithms were implemented as classes with __call__
+    # to handle situations where we want to reuse mapping.
+    # With this implementation it's format can be checked once and
+    # if some preparation would be needed it would be also done only in init.
+    # Overall it will be easier to use reuse it.
+    """Class for remapping paths from different platforms and with different styles.
+
+    The purpose of this class is to remap list of given paths to paths
+    to destination platform based on paths listed in mapping.
+
+    Just like SimpleRemap it does not support relative paths on host machine,
+    so only absolute paths are supported. Paths in form "~/dir" are also not supported.
+    Paths style and platform is recognised based on beginning of absolute path.
+    Windows style paths begins with "DISC_LETTER:\".
+    POSIX (Linux/Mac/...) paths should begin with "/...".
+    Parent statements in input and mapping paths are be resolved, e.g. "/mnt/../mnt2" -> "/mnt2".
+    It does support windows style multiplications of folders separator like "G:\\\\\\dir"
+
+    Examples:
+        >>> remap = MixedPlatformRemap({"Windows": ["L:\"], "Mac": ["/Volumes/storage1"]})
+        >>> remap(["L:\temp"], "Mac")
+        ["/Volumes/storage1/temp"]
+
+    Attributes:
+        mapping (typing.Dict[str, typing.List[typing.Optional[str]]]): Paths mapping.
+            More information in __init__ doc.
+    """
+
     def __init__(self, mapping: typing.Dict[str, typing.List[typing.Optional[str]]]):
         """
         Args:
-            mapping (typing.Dict[System, typing.List[typing.Optional[str]]]): Paths mapping.
-                Each key and value should represent System and list of paths respectively,
-                i.e. { paths-system: [path, ...], ... }.
+            mapping (typing.Dict[str, typing.List[typing.Optional[str]]]): Paths mapping.
+                Each key and value should represent platform and list of paths respectively,
+                i.e. { paths-platform: [path, ...], ... }.
                 Each path presented in mapping correspond to paths at
                 the same index in paths listed for different systems.
         """
@@ -39,7 +67,7 @@ class MixedPlatformRemap:
         """
         Args:
             input_paths (typing.List[str]): Input paths to remap.
-            dst_platform (System): Destination system from mapping,
+            dst_platform (str): Destination platform from mapping,
                 to which all input paths whose parents are listed in mapping should be mapped.
 
         Returns:
@@ -53,22 +81,18 @@ class MixedPlatformRemap:
             )
 
         dst_paths = self.mapping[dst_platform]
-        # dst_resolver = get_path_resolver(dst_platform)
         result = []
 
         for input_path in input_paths:
-            input_path = normalize_path(input_path)
             for platform, platform_paths in self.mapping.items():
                 if platform == dst_platform:
                     continue
 
-                # path_resolver = get_path_resolver(platform)
                 resolved_input_path = get_resolved_path(input_path)
                 replacement_id, matching_parent_path = next(
                     filter(
-                        lambda x: x[1]
-                        and dst_paths[x[0]]
-                        and get_resolved_path(x[1]) in resolved_input_path.parents,
+                        lambda v: (dst_paths[v[0]] and v[1])
+                        and get_resolved_path(v[1]) in resolved_input_path.parents,
                         enumerate(platform_paths),
                     ),
                     (None, None),
@@ -78,13 +102,13 @@ class MixedPlatformRemap:
                     continue
 
                 dst_path = normalize_path(dst_paths[replacement_id])
-                resolved_input_path = (
-                    str(resolved_input_path)
-                    if WINDOWS_PATH_INDICATOR.match(dst_path)
-                    else resolved_input_path.as_posix()
-                )
+                if not WINDOWS_PATH_INDICATOR.match(dst_path):
+                    resolved_input_path = resolved_input_path.as_posix()
+
                 result.append(
-                    build_dst_path(resolved_input_path, matching_parent_path, dst_path)
+                    build_dst_path(
+                        str(resolved_input_path), matching_parent_path, dst_path
+                    )
                 )
                 break
 

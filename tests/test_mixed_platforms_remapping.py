@@ -3,6 +3,9 @@ import unittest
 from src import remapping
 
 
+# Tests with unittest because of restriction to use only built in libs.
+
+
 class TestMapping(unittest.TestCase):
     def test_remap_paths_from_different_platforms(self):
         input_mapping = {

@@ -4,6 +4,28 @@ from .utils import get_resolved_path, normalize_path, build_dst_path
 
 
 class SimpleRemap:
+    # If we want to handle relative paths etc. target platform should be passed to __call__
+    # Something like on "platform-passed-by-user" branch.
+    """Class for remapping paths with the same source, destination platform and path style.
+
+    The purpose of this class is to remap list of given paths to paths in the same style
+    listed in mapping.
+    It does not support relative paths on host machine, so only absolute paths are supported.
+    Paths style and platform is recognised based on beginning of absolute path.
+    Windows style paths begins with "DISC_LETTER:\".
+    POSIX (Linux/Mac/...) paths should begin with "/...", paths in form "~/dir" are not supported.
+    Parent statements in input and mapping paths are be resolved, e.g. "/mnt/../mnt2" -> "/mnt2".
+    It does support windows style multiplications of folders separator like "G:\\\\\\dir"
+
+    Examples:
+        >>> remap = SimpleRemap({"L:\": "X:\"})
+        >>> remap(["L:\temp"])
+        ["X:\temp"]
+
+    Attributes:
+        mapping (typing.Dict[str, str]): Paths mapping. More information in __init__ doc.
+    """
+
     def __init__(self, mapping: typing.Dict[str, str]):
         """
         Args:
@@ -17,7 +39,6 @@ class SimpleRemap:
         """
         Args:
             input_paths (typing.List[str]): Input paths to remap.
-            platform (System): System corresponding to input paths.
 
         Returns:
             typing.List[str]: List of remapped input paths
