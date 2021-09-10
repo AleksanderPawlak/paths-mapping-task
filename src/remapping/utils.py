@@ -56,7 +56,7 @@ def get_resolved_path(path: str) -> pathlib.PurePath:
     """
     resolver = (
         pathlib.PureWindowsPath
-        if WINDOWS_PATH_INDICATOR.match(path)
+        if WINDOWS_PATH_INDICATOR.search(path)
         else pathlib.PurePosixPath
     )
     return resolver(normalize_path(path))
