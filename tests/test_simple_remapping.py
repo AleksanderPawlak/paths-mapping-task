@@ -24,7 +24,7 @@ class TestMapping(unittest.TestCase):
             "g:\\nope",
         ]
         remap = remapping.SimpleRemap(input_mapping)
-        result = remap(input_paths, remapping.System.WINDOWS)
+        result = remap(input_paths)
 
         self.assertEqual(expected_result, result)
 
@@ -46,7 +46,7 @@ class TestMapping(unittest.TestCase):
             "/mnt5/nope",
         ]
         remap = remapping.SimpleRemap(input_mapping)
-        result = remap(input_paths, remapping.System.LINUX)
+        result = remap(input_paths)
 
         self.assertEqual(expected_result, result)
 
@@ -66,7 +66,7 @@ class TestMapping(unittest.TestCase):
             "/Volumes/storage_0/project1/shots",
         ]
         remap = remapping.SimpleRemap(input_mapping)
-        result = remap(input_paths, remapping.System.MAC)
+        result = remap(input_paths)
 
         self.assertEqual(expected_result, result)
 
@@ -88,28 +88,6 @@ class TestMapping(unittest.TestCase):
             "/mnt5/nope",
         ]
         remap = remapping.SimpleRemap(input_mapping)
-        result = remap(input_paths, remapping.System.LINUX)
+        result = remap(input_paths)
 
         self.assertEqual(expected_result, result)
-
-    def test_remap_paths_with_unsupported_platform_should_raise(self):
-        input_mapping = {
-            "/mnt/storage1/": "/mnt2/storage2/",
-            "/mnt3/": "/mnt/",
-        }
-        input_paths = [
-            "/mnt/storage1/temp",
-            "/mnt3/storage1/",
-            "cache/Tree.abc",
-            "/mnt5/nope",
-        ]
-        dummy_platform = "SomeDummyPlatform"
-        remap = remapping.SimpleRemap(input_mapping)
-
-        with self.assertRaises(ValueError) as e:
-            remap(input_paths, dummy_platform)
-
-        self.assertEqual(
-            f"Passed platform: '{dummy_platform}' is not supported.",
-            str(e.exception),
-        )

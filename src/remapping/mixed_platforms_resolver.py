@@ -1,16 +1,15 @@
 import typing
 
 from .utils import (
-    System,
-    POSIX_PLATFORMS,
     normalize_path,
-    get_path_resolver,
+    get_resolved_path,
     build_dst_path,
+    WINDOWS_PATH_INDICATOR,
 )
 
 
 class MixedPlatformRemap:
-    def __init__(self, mapping: typing.Dict[System, typing.List[typing.Optional[str]]]):
+    def __init__(self, mapping: typing.Dict[str, typing.List[typing.Optional[str]]]):
         """
         Args:
             mapping (typing.Dict[System, typing.List[typing.Optional[str]]]): Paths mapping.
@@ -35,7 +34,7 @@ class MixedPlatformRemap:
         self.mapping = mapping
 
     def __call__(
-        self, input_paths: typing.List[str], dst_platform: System
+        self, input_paths: typing.List[str], dst_platform: str
     ) -> typing.List[str]:
         """
         Args:
@@ -53,9 +52,8 @@ class MixedPlatformRemap:
                 f" was not specified in input mapping: {self.mapping}"
             )
 
-        dst_platform_is_posix = dst_platform in POSIX_PLATFORMS
         dst_paths = self.mapping[dst_platform]
-        dst_resolver = get_path_resolver(dst_platform)
+        # dst_resolver = get_path_resolver(dst_platform)
         result = []
 
         for input_path in input_paths:
@@ -64,13 +62,13 @@ class MixedPlatformRemap:
                 if platform == dst_platform:
                     continue
 
-                path_resolver = get_path_resolver(platform)
-                resolved_input_path = path_resolver(input_path)
+                # path_resolver = get_path_resolver(platform)
+                resolved_input_path = get_resolved_path(input_path)
                 replacement_id, matching_parent_path = next(
                     filter(
                         lambda x: x[1]
                         and dst_paths[x[0]]
-                        and path_resolver(x[1]) in resolved_input_path.parents,
+                        and get_resolved_path(x[1]) in resolved_input_path.parents,
                         enumerate(platform_paths),
                     ),
                     (None, None),
@@ -79,12 +77,12 @@ class MixedPlatformRemap:
                 if replacement_id is None or not matching_parent_path:
                     continue
 
+                dst_path = normalize_path(dst_paths[replacement_id])
                 resolved_input_path = (
-                    resolved_input_path.as_posix()
-                    if dst_platform_is_posix
-                    else str(resolved_input_path)
+                    str(resolved_input_path)
+                    if WINDOWS_PATH_INDICATOR.match(dst_path)
+                    else resolved_input_path.as_posix()
                 )
-                dst_path = dst_resolver(normalize_path(dst_paths[replacement_id]))
                 result.append(
                     build_dst_path(resolved_input_path, matching_parent_path, dst_path)
                 )

@@ -6,8 +6,8 @@ from src import remapping
 class TestMapping(unittest.TestCase):
     def test_remap_paths_from_different_platforms(self):
         input_mapping = {
-            remapping.System.WINDOWS: ["L:\\", "P:\\"],
-            remapping.System.MAC: ["/Volumes/storage1", "/Volumes/storage2/"],
+            "Windows": ["L:\\", "P:\\"],
+            "Mac": ["/Volumes/storage1", "/Volumes/storage2/"],
         }
         input_paths = [
             "L:\\temp",
@@ -25,14 +25,14 @@ class TestMapping(unittest.TestCase):
             "g:\\nope",
         ]
         remap = remapping.MixedPlatformRemap(input_mapping)
-        result = remap(input_paths, remapping.System.MAC)
+        result = remap(input_paths, "Mac")
 
         self.assertEqual(expected_result, result)
 
     def test_remap_paths_from_different_platforms_with_parent_dir_symbol(self):
         input_mapping = {
-            remapping.System.WINDOWS: ["L:\\", "P:\\"],
-            remapping.System.LINUX: ["/mnt/storage1", "/mnt/storage2"],
+            "Windows": ["L:\\", "P:\\"],
+            "Linux": ["/mnt/storage1", "/mnt/storage2"],
         }
         input_paths = [
             "/mnt/storage1/project1/assets/prop/Box",
@@ -49,15 +49,15 @@ class TestMapping(unittest.TestCase):
             "P:\\project1\\textures\\wood.tga",
         ]
         remap = remapping.MixedPlatformRemap(input_mapping)
-        result = remap(input_paths, remapping.System.WINDOWS)
+        result = remap(input_paths, "Windows")
 
         self.assertEqual(expected_result, result)
 
     def test_remap_from_mixed_platforms(self):
         input_mapping = {
-            remapping.System.WINDOWS: ["L:\\", "P:\\"],
-            remapping.System.LINUX: ["/mnt/storage1", "/mnt/storage2"],
-            remapping.System.MAC: ["/Volumes/storage1", "/Volumes/storage2"],
+            "Windows": ["L:\\", "P:\\"],
+            "Linux": ["/mnt/storage1", "/mnt/storage2"],
+            "Mac": ["/Volumes/storage1", "/Volumes/storage2"],
         }
         input_paths = [
             "L:\\temp",
@@ -83,19 +83,19 @@ class TestMapping(unittest.TestCase):
             "/mnt/storage1/project2/shots",
         ]
         remap = remapping.MixedPlatformRemap(input_mapping)
-        result = remap(input_paths, remapping.System.LINUX)
+        result = remap(input_paths, "Linux")
 
         self.assertEqual(expected_result, result)
 
     def test_remap_paths_from_mixed_platforms_with_none_value_in_mappings_source(self):
         input_mapping = {
-            remapping.System.WINDOWS: ["L:\\", "P:\\", "G:\\"],
-            remapping.System.LINUX: [
+            "Windows": ["L:\\", "P:\\", "G:\\"],
+            "Linux": [
                 "/mnt/storage1",
                 "/mnt/storage2",
                 "/mnt/storage3",
             ],
-            remapping.System.MAC: [
+            "Mac": [
                 "/Volumes/storage1",
                 None,
                 "/Volumes/storage2",
@@ -125,7 +125,7 @@ class TestMapping(unittest.TestCase):
             "/mnt/storage3/project2/shots",
         ]
         remap = remapping.MixedPlatformRemap(input_mapping)
-        result = remap(input_paths, remapping.System.LINUX)
+        result = remap(input_paths, "Linux")
 
         self.assertEqual(expected_result, result)
 
@@ -134,13 +134,13 @@ class TestMapping(unittest.TestCase):
         If we want to reuse mapping there might be case where there is None value in dst paths.
         """
         input_mapping = {
-            remapping.System.WINDOWS: ["L:\\", "P:\\", "G:\\"],
-            remapping.System.LINUX: [
+            "Windows": ["L:\\", "P:\\", "G:\\"],
+            "Linux": [
                 "/mnt/storage1",
                 "/mnt/storage2",
                 "/mnt/storage3",
             ],
-            remapping.System.MAC: [
+            "Mac": [
                 "/Volumes/storage1",
                 None,
                 "/Volumes/storage2",
@@ -170,7 +170,7 @@ class TestMapping(unittest.TestCase):
             "/Volumes/storage2/project2/shots",
         ]
         remap = remapping.MixedPlatformRemap(input_mapping)
-        result = remap(input_paths, remapping.System.MAC)
+        result = remap(input_paths, "Mac")
 
         self.assertEqual(expected_result, result)
 
@@ -178,8 +178,8 @@ class TestMapping(unittest.TestCase):
         self,
     ):
         input_mapping = {
-            remapping.System.WINDOWS: ["L:\\", "P:\\", "G:\\"],
-            remapping.System.LINUX: [
+            "Windows": ["L:\\", "P:\\", "G:\\"],
+            "Linux": [
                 "/mnt/storage1",
                 "/mnt/storage2",
                 "/mnt/storage3",
@@ -190,7 +190,7 @@ class TestMapping(unittest.TestCase):
             "p:/project1/textures\\grass.tga",
             "P:\\project1\\assets\\env\\Forest",
         ]
-        target_platform = remapping.System.MAC
+        target_platform = "Mac"
         remap = remapping.MixedPlatformRemap(input_mapping)
 
         with self.assertRaises(ValueError) as e:
@@ -202,36 +202,13 @@ class TestMapping(unittest.TestCase):
             str(e.exception),
         )
 
-    def test_remap_with_paths_from_mixed_platforms_with_unsupported_platform_should_raise(
-        self,
-    ):
-        dummy_platform = "SomeDummyPlatform"
-        input_mapping = {
-            remapping.System.WINDOWS: ["L:\\", "P:\\"],
-            dummy_platform: ["/mnt/storage1", "/mnt/storage2"],
-        }
-        input_paths = [
-            "L:\\temp",
-            "p:/project1/textures\\grass.tga",
-            "P:\\project1\\assets\\env\\Forest",
-        ]
-        remap = remapping.MixedPlatformRemap(input_mapping)
-
-        with self.assertRaises(ValueError) as e:
-            remap(input_paths, dummy_platform)
-
-        self.assertEqual(
-            f"Passed platform: '{dummy_platform}' is not supported.",
-            str(e.exception),
-        )
-
     def test_initialize_remap_mixed_platforms_with_different_paths_number_should_raise_error(
         self,
     ):
         input_mapping = {
-            remapping.System.WINDOWS: ["L:\\", "P:\\"],
-            remapping.System.LINUX: ["/mnt/storage1"],  # missing element
-            remapping.System.MAC: ["/Volumes/storage1", "/Volumes/storage2"],
+            "Windows": ["L:\\", "P:\\"],
+            "Linux": ["/mnt/storage1"],  # missing element
+            "Mac": ["/Volumes/storage1", "/Volumes/storage2"],
         }
         with self.assertRaises(ValueError) as e:
             remapping.MixedPlatformRemap(input_mapping)

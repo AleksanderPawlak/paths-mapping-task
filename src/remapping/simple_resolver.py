@@ -1,6 +1,6 @@
 import typing
 
-from .utils import get_path_resolver, System, normalize_path, build_dst_path
+from .utils import get_resolved_path, normalize_path, build_dst_path
 
 
 class SimpleRemap:
@@ -13,9 +13,7 @@ class SimpleRemap:
         """
         self.mapping = mapping
 
-    def __call__(
-        self, input_paths: typing.List[str], platform: System
-    ) -> typing.List[str]:
+    def __call__(self, input_paths: typing.List[str]) -> typing.List[str]:
         """
         Args:
             input_paths (typing.List[str]): Input paths to remap.
@@ -25,14 +23,14 @@ class SimpleRemap:
             typing.List[str]: List of remapped input paths
 
         """
-        path_resolver = get_path_resolver(platform)
         result = []
 
         for input_path in input_paths:
             input_path = normalize_path(input_path)
             matching_parent_path, dst_path = next(
                 filter(
-                    lambda v: path_resolver(v[0]) in path_resolver(input_path).parents,
+                    lambda v: get_resolved_path(v[0])
+                    in get_resolved_path(input_path).parents,
                     self.mapping.items(),
                 ),
                 (None, None),
@@ -41,7 +39,7 @@ class SimpleRemap:
                 result.append(input_path)
                 continue
 
-            dst_path = path_resolver(normalize_path(dst_path))
+            dst_path = normalize_path(dst_path)
             result.append(build_dst_path(input_path, matching_parent_path, dst_path))
 
         return result
