@@ -1,6 +1,12 @@
 import typing
 
-from .utils import System, POSIX_PLATFORMS, normalize_path, get_path_resolver
+from .utils import (
+    System,
+    POSIX_PLATFORMS,
+    normalize_path,
+    get_path_resolver,
+    build_dst_path,
+)
 
 
 class MixedPlatformRemap:
@@ -15,7 +21,7 @@ class MixedPlatformRemap:
         """
         if any(
             paths for paths in mapping.values() if not isinstance(paths, (list, tuple))
-        ):
+        ):  # This could be also done with external lib like typeguard
             raise ValueError(
                 f"Incorrect format of input mapping: '{mapping}'. "
                 f"Should be dict of str keys and list or tuple values."
@@ -51,7 +57,7 @@ class MixedPlatformRemap:
         dst_paths = self.mapping[dst_platform]
         dst_resolver = get_path_resolver(dst_platform)
         result = []
-        # FIXME: ugly nested loops and breaks
+
         for input_path in input_paths:
             input_path = normalize_path(input_path)
             for platform, platform_paths in self.mapping.items():
@@ -61,15 +67,15 @@ class MixedPlatformRemap:
                 path_resolver = get_path_resolver(platform)
                 resolved_input_path = path_resolver(input_path)
                 replacement_id, matching_parent_path = next(
-                    (
-                        (idx, path)
-                        for idx, path in enumerate(platform_paths)
-                        if path
-                        and dst_paths[idx]
-                        and path_resolver(path) in resolved_input_path.parents
+                    filter(
+                        lambda x: x[1]
+                        and dst_paths[x[0]]
+                        and path_resolver(x[1]) in resolved_input_path.parents,
+                        enumerate(platform_paths),
                     ),
                     (None, None),
                 )
+
                 if replacement_id is None or not matching_parent_path:
                     continue
 
@@ -78,10 +84,10 @@ class MixedPlatformRemap:
                     if dst_platform_is_posix
                     else str(resolved_input_path)
                 )
-                sub_path = resolved_input_path[len(matching_parent_path) :]
-                sub_path = sub_path.strip("/").strip("\\")
-                result_path = dst_resolver(dst_paths[replacement_id]).joinpath(sub_path)
-                result.append(str(result_path))
+                dst_path = dst_resolver(normalize_path(dst_paths[replacement_id]))
+                result.append(
+                    build_dst_path(resolved_input_path, matching_parent_path, dst_path)
+                )
                 break
 
             else:

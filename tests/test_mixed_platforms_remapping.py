@@ -30,7 +30,6 @@ class TestMapping(unittest.TestCase):
         self.assertEqual(expected_result, result)
 
     def test_remap_paths_from_different_platforms_with_parent_dir_symbol(self):
-        # TODO: Should we handle parent symbols in mappings paths?
         input_mapping = {
             remapping.System.WINDOWS: ["L:\\", "P:\\"],
             remapping.System.LINUX: ["/mnt/storage1", "/mnt/storage2"],
@@ -75,7 +74,7 @@ class TestMapping(unittest.TestCase):
             "/mnt/storage1/temp",
             "/mnt/storage2/project1/textures/grass.tga",
             "/mnt/storage2/project1/assets/env/Forest",
-            # "cache/Tree.abc",  # This might be a bug in specification
+            # "cache/Tree.abc",  # This might be a bug in specification.  Why should it change?
             "cache\\Tree.abc",
             "g:\\nope",
             "/mnt/storage2/project1/assets/prop/Box",
@@ -162,7 +161,7 @@ class TestMapping(unittest.TestCase):
             "/Volumes/storage1/temp",
             "p:/project1/textures\\grass.tga",
             "P:\\project1\\assets\\env\\Forest",
-            # "cache/Tree.abc",  # This might be a bug in specification. Why should it change?
+            # "cache/Tree.abc",  # This might be a bug in specification.
             "cache\\Tree.abc",
             "/Volumes/storage2/yes",
             "/Volumes/storage2/project1/assets/prop/Box",

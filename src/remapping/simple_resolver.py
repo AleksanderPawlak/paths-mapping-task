@@ -1,6 +1,6 @@
 import typing
 
-from .utils import get_path_resolver, System, normalize_path
+from .utils import get_path_resolver, System, normalize_path, build_dst_path
 
 
 class SimpleRemap:
@@ -16,12 +16,6 @@ class SimpleRemap:
     def __call__(
         self, input_paths: typing.List[str], platform: System
     ) -> typing.List[str]:
-        # TODO: write that it does not resolve symilnks if given path is on local machine.
-        # TODO: write that if platform param is invalid function
-        # could possibly incorrectly remap paths
-        # TODO: If PurePath won't be removed note why.
-        # (Assuming System might lead to incorrect handling of paths).
-        # Maybe note that it doesn't handle relative paths
         """
         Args:
             input_paths (typing.List[str]): Input paths to remap.
@@ -36,23 +30,18 @@ class SimpleRemap:
 
         for input_path in input_paths:
             input_path = normalize_path(input_path)
-            source_sub_path, dst_path = next(
-                (
-                    (source_sub_path, dst_path)
-                    for source_sub_path, dst_path in self.mapping.items()
-                    if path_resolver(source_sub_path)
-                    in path_resolver(input_path).parents
+            matching_parent_path, dst_path = next(
+                filter(
+                    lambda v: path_resolver(v[0]) in path_resolver(input_path).parents,
+                    self.mapping.items(),
                 ),
                 (None, None),
             )
-            if not source_sub_path or not dst_path:
+            if not matching_parent_path or not dst_path:
                 result.append(input_path)
                 continue
 
-            dst_path = path_resolver(dst_path)
-            sub_path = input_path[len(source_sub_path) :]  # FIXME: Code duplications
-            sub_path = sub_path.strip("/").strip("\\")
-            result_path = dst_path.joinpath(sub_path)
-            result.append(str(result_path))
+            dst_path = path_resolver(normalize_path(dst_path))
+            result.append(build_dst_path(input_path, matching_parent_path, dst_path))
 
         return result

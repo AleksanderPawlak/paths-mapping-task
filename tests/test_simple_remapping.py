@@ -5,7 +5,6 @@ from src import remapping
 
 class TestMapping(unittest.TestCase):
     def test_remap_paths_from_windows(self):
-        # TODO: think about other input data format
         input_mapping = {
             "L:\\": "X:\\",
             "P:\\project1\\textures": "Z:\\library\\textures",
@@ -68,6 +67,28 @@ class TestMapping(unittest.TestCase):
         ]
         remap = remapping.SimpleRemap(input_mapping)
         result = remap(input_paths, remapping.System.MAC)
+
+        self.assertEqual(expected_result, result)
+
+    def test_remap_paths_from_linux_with_parent_stmt_in_mapping(self):
+        input_mapping = {
+            "/mnt/storage1/": "/mnt2/../home/user/something/",
+            "/mnt3/": "/mnt/",
+        }
+        input_paths = [
+            "/mnt/storage1/temp",
+            "/mnt3/storage1/",
+            "cache/Tree.abc",
+            "/mnt5/nope",
+        ]
+        expected_result = [
+            "/home/user/something/temp",
+            "/mnt/storage1",
+            "cache/Tree.abc",
+            "/mnt5/nope",
+        ]
+        remap = remapping.SimpleRemap(input_mapping)
+        result = remap(input_paths, remapping.System.LINUX)
 
         self.assertEqual(expected_result, result)
 

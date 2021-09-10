@@ -7,7 +7,7 @@ PARENT_PATH_PATTERN = re.compile(r"(/|\\).[^\.\./\\]*(/|\\)\.\.")
 MULTIPLE_BACKSLASHES_PATTERN = re.compile(r"\\+")
 MULTIPLE_SLASHES_PATTERN = re.compile(r"/+")
 
-# TODO: is there a way to differentiate between systems without passing the system value?
+
 class System(enum.Enum):
     WINDOWS = enum.auto()
     LINUX = enum.auto()
@@ -51,7 +51,6 @@ def get_path_resolver(platform: System) -> typing.Type[pathlib.PurePath]:
         typing.Type[pathlib.PurePath]: subtype of PurePath specific to given platform.
 
     """
-    # TODO: maybe without PurePathLib?
     path_resolver = {
         System.WINDOWS: pathlib.PureWindowsPath,
         System.LINUX: pathlib.PurePosixPath,
@@ -61,3 +60,11 @@ def get_path_resolver(platform: System) -> typing.Type[pathlib.PurePath]:
         raise ValueError(f"Passed platform: '{platform}' is not supported.")
 
     return path_resolver
+
+
+def build_dst_path(
+    input_path: str, part_to_replace: str, replacement_path: pathlib.PurePath
+) -> str:
+    sub_path = input_path[len(part_to_replace) :]
+    sub_path = sub_path.strip("/").strip("\\")
+    return str(replacement_path.joinpath(sub_path))
