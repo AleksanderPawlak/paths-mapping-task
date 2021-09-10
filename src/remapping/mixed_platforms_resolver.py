@@ -4,7 +4,7 @@ from .utils import (
     normalize_path,
     get_resolved_path,
     build_dst_path,
-    WINDOWS_PATH_INDICATOR,
+    is_windows_style_path,
 )
 
 
@@ -102,7 +102,7 @@ class MixedPlatformRemap:
                     continue
 
                 dst_path = normalize_path(dst_paths[replacement_id])
-                if not WINDOWS_PATH_INDICATOR.match(dst_path):
+                if not is_windows_style_path(dst_path):
                     resolved_input_path = resolved_input_path.as_posix()
 
                 result.append(
